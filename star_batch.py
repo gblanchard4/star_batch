@@ -91,8 +91,8 @@ def main():
 	with open(batchfilename, 'w') as batchfile:
 		for filename in filelist:
 			#build filenames
-			read_1 = filename+'_1'+file_extension
-			read_2 = filename+'_2'+file_extension
+			read_1 = abs_input_dir+filename+'_1'+file_extension
+			read_2 = abs_input_dir+filename+'_2'+file_extension
 
 			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
 
