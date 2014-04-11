@@ -81,7 +81,7 @@ def main():
 	filelist = []
 	for filename in os.listdir(abs_input_dir):
 		if filename.endswith(file_extension):
-			filelist.append(filename.rsplit('_')[0]) # multiple underscores
+			filelist.append(filename.rsplit('_')[:-1]) # multiple underscores
 
 	print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, clean_path_index)
 
