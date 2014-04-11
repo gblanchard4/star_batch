@@ -52,9 +52,9 @@ def main():
 	(options, args) = parser.parse_args()
 
 	# Check if required options exist
-	not options.input_dir:
+	if not options.input_dir:
 		parser.error('ERROR -d missing,  No input directory given.')
-	not options.extension_string:
+	if not options.extension_string:
 		parser.error('ERROR -e missing,  No file extension given')
 	if not options.index_dir:
 		parser.error('ERROR -i missing,  No index given.')
