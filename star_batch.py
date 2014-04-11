@@ -85,9 +85,9 @@ def main():
 	print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, index)
 
 	time_stamp = str(int(time.time()))
-	batchfile = 'batch_%s.sh' % time_stamp
+	batchfilename = 'batch_%s.sh' % time_stamp
 
-	with open(batchfile, 'w'):
+	with open(batchfilename, 'w') as batchfile:
 		for filename in filelist:
 			#build filenames
 			read_1 = filename+'_1'+file_extension
