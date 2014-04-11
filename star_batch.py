@@ -12,7 +12,10 @@ STAR Batch Script
 from optparse import OptionParser
 from multiprocessing import cpu_count
 import os
-
+import sys
+import subprocess
+import time
+import datetime
 
 
 
@@ -79,18 +82,24 @@ def main():
 		if filename.endswith(file_extension):
 			filelist.append(filename.rsplit('_')[0]) # multiple underscores
 
+	print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, index)
 
-	for filename in filelist:
-		read_1 = filename+'_1'+file_extension
-		read_2 = filename+'_2'+file_extension
+	time_stamp = str(int(time.time()))
+	batchfile = 'batch_%s.sh' % time_stamp
 
-		output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, index)
+	with open(batchfile, 'w'):
+		for filename in filelist:
+			#build filenames
+			read_1 = filename+'_1'+file_extension
+			read_2 = filename+'_2'+file_extension
 
-		print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, index)
+			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, index)
 
-		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+			command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+			
+			batchfile.write(command_string)
+			
 
-		print command_string
 
 if __name__ == '__main__':
 	main()
