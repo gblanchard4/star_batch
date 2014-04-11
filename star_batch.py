@@ -67,7 +67,7 @@ def main():
 	clip5p = options.clip5pbase
 	repeat = options.repeat
 
-	output_string = "_STAR_paired_Clip%s_Repeat%s_%s.sam" % (clip5p, repeat, index)
+	
 
 	# Get absolute path information for input directory
 	abs_input_dir = os.path.abspath(input_dir)
@@ -77,16 +77,18 @@ def main():
 	filelist = []
 	for filename in os.listdir(abs_input_dir):
 		if filename.endswith(file_extension):
-			filelist.append(filename.rsplit('_')[0])
+			filelist.append(filename.rsplit('_')[0]) # multiple underscores
 
 
 	for filename in filelist:
 		read_1 = filename+'_1'+file_extension
 		read_2 = filename+'_2'+file_extension
 
+		output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, index)
+
 		print "STAR Batch Command:\n\n Input Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, index, processors, clip5p, repeat)
 
-		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2500000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 
 		print command_string
 
