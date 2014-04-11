@@ -96,7 +96,7 @@ def main():
 
 			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
 
-			command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+			command_string = "/home/mike/STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 			
 			batchfile.write(command_string)
 			
