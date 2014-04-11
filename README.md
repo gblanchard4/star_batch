@@ -24,7 +24,8 @@ Usage: `star_batch.py -d inputdirectory -e file_extension -i index [-p processor
 #### Optional:
                         
 **-p PROCESSORS, --procs=PROCESSORS**  
->The number of processors to use.Default is 90 percent of available 
+>The number of processors to use.  
+DEFAULT = 90% of CPUs int(cpu_count() * .90)
 
 **-b CLIP5PBASE, --base=CLIP5PBASE**  
 >clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates.  
