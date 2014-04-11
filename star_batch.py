@@ -74,7 +74,7 @@ def main():
 
 	# Get absolute path information for input directory
 	abs_input_dir = os.path.abspath(input_dir)
-	clean_path_index = index.split('/')[-1]
+	clean_path_index = index.rstrip('/').split('/')[-1]
 
 	# Get a listing of all files in the input directory that match the file extension
 	# The list created does not include the _1.extension or _2.extension
