@@ -51,6 +51,10 @@ def main():
 	# -i --index
 	parser.add_option("-i", "--index", action="store", type="string", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored")
 
+	# all option, recurse into all directories
+	# -a --all
+	parser.add_option("-a", "--all", action="store_true", dest="all", help="recurse through all directories")
+
 	# Grab command line args
 	(options, args) = parser.parse_args()
 
@@ -70,7 +74,6 @@ def main():
 	clip5p = options.clip5pbase
 	repeat = options.repeat
 
-	
 
 	# Get absolute path information for input directory
 	abs_input_dir = os.path.abspath(input_dir)
@@ -79,9 +82,19 @@ def main():
 	# Get a listing of all files in the input directory that match the file extension
 	# The list created does not include the _1.extension or _2.extension
 	filelist = []
-	for filename in os.listdir(abs_input_dir):
-		if filename.endswith(file_extension):
-			filelist.append('_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
+	if not options.all:
+		for filename in os.listdir(abs_input_dir):
+			if filename.endswith(file_extension):
+				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
+	else: # Recurse
+		for dirname, dirnames, filenames in os.walk('.'):
+			# print path to all subdirectories first.
+			for subdirname in dirnames:
+				print os.path.join(dirname, subdirname)
+			# print path to all filenames.
+			for filename in filenames:
+				print os.path.join(dirname, filename)
+
 
 	print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, index)
 
@@ -96,7 +109,7 @@ def main():
 
 			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
 
-			command_string = "/home/mike/STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+			command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 			
 			batchfile.write(command_string)
 			
