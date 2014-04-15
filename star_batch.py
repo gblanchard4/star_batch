@@ -17,43 +17,41 @@ import subprocess
 import time
 import datetime
 
-
-
 def main():
 
 	# Calculate 90% of CPU
 	cpu_default = int(cpu_count() * .90)
 
 	#Create the argument parser
-	parser = OptionParser(usage="Usage: star_batch.py -d inputdirectory -e file_extension -i index [-p processors -b clip5pNbases -r outFilterMultimapNmax]")
+	parser = OptionParser(usage="Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]")
 
 	# input directory 
-	# -d --dir
-	parser.add_option("-d", "--dir", action="store", type="string", dest="input_dir", help="The input directory to analyze")
+	# -i --input
+	parser.add_option("-i", "--input", action="store", type="string", dest="input_dir", help="The input directory to analyze")
 
 	# file extension
 	# -e --extension
 	parser.add_option("-e", "--ext", action="store", type="string", dest="extension_string", help="The file extension to match. File extensions must start with '.' to be valid!")
 
-	# processors
-	# -p --procs
-	parser.add_option("-p", "--procs", action="store", type="int", dest="processors", default=cpu_default, help="The number of processors to use. Default is 90 percent of available. i.e. This machine's DEFAULT = %s " % cpu_default)
+	# threads
+	# -t --threads
+	parser.add_option("-t", "--threads", action="store", type="int", dest="processors", default=cpu_default, help="The number of processors to use. Default is 90 percent of available. i.e. This machine's DEFAULT = %s " % cpu_default)
 
-	# clip 5p bases
-	# -b --clip5p
-	parser.add_option("-b", "--base", action="store", type="int", dest="clip5pbase", default=6, help="clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates. DEFAULT = 6")
+	# clip5pNbases
+	# --clip5pNbases
+	parser.add_option("--clip5pNbases", action="store", type="int", dest="clip5pbase", default=6, help="clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates. DEFAULT = 6")
 
-	# repeats
-	# -r --repeat
-	parser.add_option("-r", "--repeat", action="store", type="int", dest="repeat", default=10, help="outFilterMultimapNmax: int: read alignments will be output only if the read maps fewer than this value, otherwise no alignments will be output. DEFAULT = 10")
+	# outFilterMultimapNmax
+	# --outFilterMultimapNmax
+	parser.add_option("--outFilterMultimapNmax", action="store", type="int", dest="repeat", default=10, help="outFilterMultimapNmax: int: read alignments will be output only if the read maps fewer than this value, otherwise no alignments will be output. DEFAULT = 10")
 
-	# index director y
-	# -i --index
-	parser.add_option("-i", "--index", action="store", type="string", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored")
+	# genome index directory
+	# -g --genomeDir
+	parser.add_option("-g", "--genomeDir", action="store", type="string", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored")
 
 	# all option, recurse into all directories
-	# -a --all
-	parser.add_option("-a", "--all", action="store_true", dest="all", help="recurse through all directories")
+	# -r --recurse
+	parser.add_option("-r", "--recurse", action="store_true", dest="all", help="recurse through all directories")
 
 	# Grab command line args
 	(options, args) = parser.parse_args()
@@ -74,6 +72,10 @@ def main():
 	clip5p = options.clip5pbase
 	repeat = options.repeat
 
+	# Executed timestamp, used for batch file creation
+	time_stamp = str(datetime.datetime.now().strftime("%m%d%y-%H%M%S"))
+
+
 
 	# Get absolute path information for input directory
 	abs_input_dir = os.path.abspath(input_dir)
@@ -93,12 +95,10 @@ def main():
 				if filename.endswith(file_extension):
 					filelist.append('_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
 
-
-	print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, index)
-
-	time_stamp = datetime.datetime.now().strftime("%m%d%y-%H%M%S")
-
+	time_stamp = str(datetime.datetime.now().strftime("%m%d%y-%H%M%S"))
 	batchfilename = 'batch_%s.sh' % time_stamp
+
+	print "STAR Batch Command:\n\nInput Directory: %s\nFile Extension: %s\nProcessors: %s\nclip5pNbases: %s\noutFilterMultimapNmax: %s\ngenomeDir: %s\nBatch File: %s\n" % (input_dir, file_extension, processors, clip5p, repeat, index, batchfilename)
 
 	with open(batchfilename, 'w') as batchfile:
 		for filename in filelist:
@@ -108,16 +108,18 @@ def main():
 
 			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
 
-			command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
-			
+			#command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s --genomeLoad=LoadAndKeep;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+			command_string = "echo 'this works';\n"
 			batchfile.write(command_string)
 
+		# The genome was loaded with --genomeLoad=LoadAndKeep, we need to unload it at the end of the commands
+		unload_genome_command = "STAR --genomeLoad=Remove"
+		
 	# Run batchfile
-	batch_proc = subprocess.Popen('./'+batchfilename)
-	batch_proc.wait()
+	batch_proc = subprocess.Popen(['/bin/sh',batchfilename])
 
-			
+def build_filelist()
 
-
+	
 if __name__ == '__main__':
 	main()
