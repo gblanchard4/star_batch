@@ -6,4 +6,5 @@ for dirname, dirnames, filenames in os.walk('.'):
 #		print os.path.join(dirname, subdirname)
 	# print path to all filenames.
 	for filename in filenames:
-		print os.path.join(dirname, filename)
+		if filename.endswith('.txt'):
+			print os.path.join(dirname, filename)

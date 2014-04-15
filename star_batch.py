@@ -87,18 +87,17 @@ def main():
 			if filename.endswith(file_extension):
 				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
 	else: # Recurse
-		for dirname, dirnames, filenames in os.walk('.'):
-			# print path to all subdirectories first.
-			for subdirname in dirnames:
-				print os.path.join(dirname, subdirname)
+		for dirname, dirnames, filenames in os.walk(abs_input_dir):
 			# print path to all filenames.
 			for filename in filenames:
-				print os.path.join(dirname, filename)
+				if filename.endswith(file_extension):
+					filelist.append('_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
 
 
 	print "STAR Batch Command:\n\nInput Directory:%s\nFile Extension:%s\nProcessors:%s\nclip5pNbases:%s\noutFilterMultimapNmax:%s\ngenomeDir:%s\n" % (input_dir, file_extension, processors, clip5p, repeat, index)
 
-	time_stamp = str(int(time.time()))
+	time_stamp = datetime.datetime.now().strftime("%m%d%y-%H%M%S")
+
 	batchfilename = 'batch_%s.sh' % time_stamp
 
 	with open(batchfilename, 'w') as batchfile:
@@ -112,6 +111,11 @@ def main():
 			command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 			
 			batchfile.write(command_string)
+
+	# Run batchfile
+	batch_proc = subprocess.Popen('./'+batchfilename)
+	batch_proc.wait()
+
 			
 
 
