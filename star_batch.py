@@ -24,7 +24,7 @@ def main():
 	cpu_default = int(cpu_count() * .90)
 
 	#Create the argument parser
-	parser = OptionParser(usage="Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]")
+	parser = OptionParser(usage="Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads -r --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]")
 
 	# input directory 
 	# -i --input
@@ -59,11 +59,11 @@ def main():
 
 	# Check if required options exist
 	if not options.input_dir:
-		parser.error('ERROR -d missing,  No input directory given.')
+		parser.error('ERROR -i missing,  No input directory given.')
 	if not options.extension_string:
 		parser.error('ERROR -e missing,  No file extension given')
 	if not options.index_dir:
-		parser.error('ERROR -i missing,  No index given.')
+		parser.error('ERROR -g missing,  No index given.')
 
 	# Set argument values
 	input_dir = options.input_dir # REQUIRED
@@ -97,35 +97,34 @@ def main():
 	batchfilename = 'batch_%s.sh' % time_stamp
 	logfilename = 'batch_%s.log' % time_stamp
 
-	logging.basicConfig(filename=log,level=logging.INFO)
+	logging.basicConfig(filename=logfilename,level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 	print "STAR Batch Command:\n\nInput Directory: %s\nFile Extension: %s\nProcessors: %s\nclip5pNbases: %s\noutFilterMultimapNmax: %s\ngenomeDir: %s\nBatch File: %s\n" % (input_dir, file_extension, processors, clip5p, repeat, index, batchfilename)
 	logging.info("STAR Batch Command:\n\nInput Directory: %s\nFile Extension: %s\nProcessors: %s\nclip5pNbases: %s\noutFilterMultimapNmax: %s\ngenomeDir: %s\nBatch File: %s\n" % (input_dir, file_extension, processors, clip5p, repeat, index, batchfilename))
 
-	with open(batchfilename, 'w') as batchfile:
-		logging.info("Command List:")
+	# Build command list
+	command_list = []
+	for filename in filelist:
+		#build filenames
+		read_1 = abs_input_dir+'/'+filename+'_1'+file_extension
+		read_2 = abs_input_dir+'/'+filename+'_2'+file_extension
 
-		for filename in filelist:
-			#build filenames
-			read_1 = abs_input_dir+'/'+filename+'_1'+file_extension
-			read_2 = abs_input_dir+'/'+filename+'_2'+file_extension
+		output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
+		
+		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s --genomeLoad=LoadAndKeep;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+		
+		command_list.append(command_string)
 
-			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
-			command_string = "STAR --genomeDir %es --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s --genomeLoad=LoadAndKeep;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
-			
-			logging.info(command_string)
-			batchfile.write(command_string)
+	unload_genome_command = "STAR --genomeLoad=Remove;"	
+	command_list.append(unload_genome_command)
 
-		# The genome was loaded with --genomeLoad=LoadAndKeep, we need to unload it at the end of the commands
-		unload_genome_command = "STAR --genomeLoad=Remove"
-		logging.info(unload_genome_command)
-		batchfile.write(unload_genome_command)
+	# Queue the files
+	for command in command_list:
+		logging.info("Starting command:\n\t%s" % command)
+		proc = subprocess.Popen(command, shell=True)
+		proc.wait()
+		logging.info("Finished command:\n\t%s" % command)
 
-
-	# Run batchfile
-	#batch_proc = subprocess.Popen(['/bin/sh',batchfilename])
-
-	
 if __name__ == '__main__':
 	main()
  
