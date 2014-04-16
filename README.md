@@ -1,12 +1,11 @@
 # star_batch
-==========
 
 ##A star batch script
 
 Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads -r --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]
 
 
-###Options:  
+###Arguments:  
 
 **-h, --help**  
 >show this help message and exit  
