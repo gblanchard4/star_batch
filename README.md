@@ -23,8 +23,9 @@ Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads
 >The file extension to match. File extensions must start with '.' to be valid!  
     
 #### Optional:  
-
-**-r **
+  
+  
+**-r**
 >Recursive input directory
                         
 **-t threads, --threads=PROCESSORS**  
