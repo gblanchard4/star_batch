@@ -105,7 +105,7 @@ def main():
 	# Build command list
 	command_list = []
 	for filename in filelist:
-		#build filenames
+		# Build filenames
 		read_1 = abs_input_dir+'/'+filename+'_1'+file_extension
 		read_2 = abs_input_dir+'/'+filename+'_2'+file_extension
 
@@ -120,10 +120,14 @@ def main():
 
 	# Queue the files
 	for command in command_list:
-		logging.info("Starting command:\n\t%s" % command)
-		proc = subprocess.Popen(command, shell=True)
-		proc.wait()
-		logging.info("Finished command:\n\t%s" % command)
+		try:
+			logging.info("Starting command:\n\t%s" % command)
+			proc = subprocess.Popen(command, shell=True)
+			proc.wait()
+			logging.info("Finished command:\n\t%s" % command)
+		except OSError:
+			logging.info("ERROR:\n\tSomething broke :(")
+				
 
 if __name__ == '__main__':
 	main()
