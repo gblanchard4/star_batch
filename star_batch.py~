@@ -118,26 +118,26 @@ def main():
 
 		output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
 		
-		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s ;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
+		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s --genomeLoad LoadAndKeep;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 		
 		command_list.append(command_string)
 
-#	unload_genome_command = "STAR --genomeLoad Remove;" 	
-#	command_list.append(unload_genome_command)
+	unload_genome_command = "STAR --genomeLoad Remove;" 	
+	command_list.append(unload_genome_command)
 
-#	with open(batchfilename, 'w') as batch:
-#		for command in command_list:
-#			batch.write(command)
+	with open(batchfilename, 'w') as batch:
+		for command in command_list:
+			batch.write(command)
 
 	# Queue the files
-	for command in command_list:
-		try:
-			logging.info("Starting command:\n%s" % command)
-			proc = subprocess.Popen(command, shell=True)
-			proc.wait()
-			logging.info("Finished command:\n\t%s" % command)
-		except OSError:
-			logging.info("ERROR:\n\tSomething broke :(")
+#	for command in command_list:
+#		try:
+#			logging.info("Starting command:\n%s" % command)
+#			proc = subprocess.Popen(command, shell=True)
+#			proc.wait()
+#			logging.info("Finished command:\n\t%s" % command)
+#		except OSError:
+#			logging.info("ERROR:\n\tSomething broke :(")
 				
 
 if __name__ == '__main__':
