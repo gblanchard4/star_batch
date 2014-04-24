@@ -30,10 +30,6 @@ def main():
 	# -i --input
 	parser.add_option("-i", "--input", action="store", type="string", dest="input_dir", help="The input directory to analyze")
 
-	# output directory 
-	# -o --output
-	#parser.add_option("-o", "--output", action="store", type="string", dest="output_dir", help="The out directory location")
-
 	# file extension
 	# -e --extension
 	parser.add_option("-e", "--ext", action="store", type="string", dest="extension_string", help="The file extension to match. File extensions must start with '.' to be valid!")
@@ -101,6 +97,9 @@ def main():
 				if filename.endswith(file_extension):
 					filelist.append(dirname+'/'+'_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
 
+	# Convert filelist into a set to remove duplicates
+	fileset = set(filelist)
+
 	batchfilename = 'batch_%s.sh' % time_stamp
 	logfilename = 'batch_%s.log' % time_stamp
 
@@ -111,7 +110,7 @@ def main():
 
 	# Build command list
 	command_list = []
-	for filename in filelist:
+	for filename in fileset:
 		# Build filenames
 		read_1 = filename+'_1'+file_extension
 		read_2 = filename+'_2'+file_extension
@@ -121,13 +120,6 @@ def main():
 		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s ;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 		
 		command_list.append(command_string)
-
-#	unload_genome_command = "STAR --genomeLoad Remove;" 	
-#	command_list.append(unload_genome_command)
-
-#	with open(batchfilename, 'w') as batch:
-#		for command in command_list:
-#			batch.write(command)
 
 	# Queue the files
 	for command in command_list:
