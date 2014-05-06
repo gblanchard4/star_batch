@@ -1,0 +1,2 @@
+sudo python star_batch.py -i '/media/firewire/TCGA-GBM-DNA-WGS-BI-Tumor_Cont.-10' -e .fastq.gz --outFilterMultimapNmax=1000 -g '/opt/star/index/hg19+ribosomal+human_virus+phage' -r
+

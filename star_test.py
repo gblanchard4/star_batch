@@ -54,10 +54,6 @@ def main():
 	# -r --recurse
 	parser.add_option("-r", "--recurse", action="store_true", dest="all", help="recurse through all directories")
 
-	# output path
-	# -o --output
-	parser.add_option("-o", "--output", action="store_true", dest="output_path", help="path to output folder")
-
 	# Grab command line args
 	(options, args) = parser.parse_args()
 
@@ -79,7 +75,6 @@ def main():
 	processors = options.processors
 	clip5p = options.clip5pbase
 	repeat = options.repeat
-	output_path = options.output_path
 
 	# Executed timestamp, used for batch and log file creation
 	time_stamp = str(datetime.datetime.now().strftime("%m%d%y-%H%M%S"))
@@ -116,21 +111,17 @@ def main():
 	# Build command list
 	command_list = []
 	for filename in fileset:
-		print filename
 		# Build filenames
 		read_1 = filename+'_1'+file_extension
 		read_2 = filename+'_2'+file_extension
 
-		if output_path not None:			
-			output_string = "%s/%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (output_path, filename, clip5p, repeat, clean_path_index)
-		else:
-			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
+		output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
 		
 		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s ;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 		
 		command_list.append(command_string)
 
-'''	# Queue the files
+# Queue the files
 	for command in command_list:
 		try:
 			logging.info("Starting command:\n%s" % command)
@@ -139,7 +130,6 @@ def main():
 			logging.info("Finished command:\n\t%s" % command)
 		except OSError:
 			logging.info("ERROR:\n\tSomething broke :(")
-'''				
 
 if __name__ == '__main__':
 	main()
