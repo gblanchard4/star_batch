@@ -28,12 +28,13 @@ def make_fileset(recurse, file_extension, input_dir):
 		for dirname, dirnames, filenames in os.walk(input_dir):
 			for filename in filenames:
 				if filename.endswith(file_extension):
-					# WAT?
-					filelist.append(dirname+'/'+'_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
+					# Append path+filename with no extension
+					filelist.append(dirname+os.path.splitext(filename)[0]) # multiple underscores
 	else:
 		for filename in os.listdir(input_dir):
 			if filename.endswith(file_extension):
-				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1])))
+				# Append path+filename with no extension
+				filelist.append(dirname+os.path.splitext(filename)[0])
 	# Create a set to remove duplicates
 	fileset = set(filelist)
 	return fileset
@@ -79,60 +80,27 @@ def main():
 	input_dir = os.path.abspath(args.input_dir) # REQUIRED
 	index = os.path.abspath(args.index_dir) #REQUIRED
 	file_extension = args.extension_string # REQUIRED
-	output_path = os.path.abspath(output_path)
+	output_path = os.path.abspath(output_path) # REQUIRED
 	processors = args.processors
 	clip5p = args.clip5pbase
 	repeat = args.repeat
 	recurse = args.recurse
 
-	
 	# Executed timestamp, used for batch and log file creation
-	time_stamp = str(datetime.datetime.now().strftime("%m%d%y-%H%M%S"))
+	start_timestamp = str(datetime.datetime.now().strftime("%m%d%y-%H%M%S"))
 
 
 	fileset = make_fileset(recurse, file_extension, input_dir)
-'''	
-	# Get a listing of all files in the input directory that match the file extension
-	# The list created does not include the _1.extension or _2.extension
-	filelist = []
-	if recurse:
-		for dirname, dirnames, filenames in os.walk(input_dir):
-			for filename in filenames:
-				if filename.endswith(file_extension):
-					# WAT?
-					filelist.append(dirname+'/'+'_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
-	else:
-		for filename in os.listdir(input_dir):
-			if filename.endswith(file_extension):
-				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1])))
-	# Create a set to remove duplicates
-	fileset = set(filelist)
-	
-	batchfilename = 'batch_%s.sh' % time_stamp
-	logfilename = 'batch_%s.log' % time_stamp
---------------------------------------------------------------------------------------------------------------------------------------------
-	if not options.all:
-		for filename in os.listdir(abs_input_dir):
-			if filename.endswith(file_extension):
-				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
-	else: # Recurse
-		for dirname, dirnames, filenames in os.walk(abs_input_dir):
-			# print path to all filenames.
-			for filename in filenames:
-				if filename.endswith(file_extension):
-					filelist.append(dirname+'/'+'_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
-	print filelist
-	# Convert filelist into a set to remove duplicates
-	fileset = set(filelist)
-'''
-	batchfilename = 'batch_%s.sh' % time_stamp
-	logfilename = 'batch_%s.log' % time_stamp
 
-	logging.basicConfig(filename=logfilename,level=logging.INFO,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
-	print "STAR Batch Command:\n\nInput Directory: %s\nFile Extension: %s\nProcessors: %s\nclip5pNbases: %s\noutFilterMultimapNmax: %s\ngenomeDir: %s\nBatch File: %s\n" % (input_dir, file_extension, processors, clip5p, repeat, index, batchfilename)
-	logging.info("STAR Batch Command:\n\nInput Directory: %s\nFile Extension: %s\nProcessors: %s\nclip5pNbases: %s\noutFilterMultimapNmax: %s\ngenomeDir: %s\nBatch File: %s\n" % (input_dir, file_extension, processors, clip5p, repeat, index, batchfilename))
-	
+	# Print the overview to STDOUT
+	print """STAR Batch Command:			
+			Input Directory: {}
+			File Extension: {}
+			Processors: {}
+			clip5pNbases: {}
+			outFilterMultimapNmax: {}
+			genomeDir: {}
+			Batch File: {}""".format(input_dir, file_extension, processors, clip5p, repeat, index, batchfilename)
 	
 	# Build command list
 	command_list = []
@@ -141,10 +109,7 @@ def main():
 		read_1 = filename+'_1'+file_extension
 		read_2 = filename+'_2'+file_extension
 
-		if not output_path == None:			
-			output_string = "%s/%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (output_path, filename.split('/')[-1], clip5p, repeat, clean_path_index)
-		if output_path == None:
-			output_string = "%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (filename, clip5p, repeat, clean_path_index)
+		output_string = "%s/%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (output_path, os.path.basename(filename), clip5p, repeat, clean_path_index)
 		print output_string
 			
 		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s ;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
