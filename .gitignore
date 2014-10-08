@@ -1,0 +1,8 @@
+# STAR Files
+Aligned.out.sam
+Log.out
+Log.progress.out
+_tmp/
+
+# Python Files
+*.pyc
