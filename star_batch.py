@@ -150,7 +150,7 @@ def main():
 			proc = subprocess.Popen(command, shell=True)
 			proc.wait()
 		except OSError:
-			logging.info("ERROR:\n\tSomething broke")
+			print "Something broke :("
 			
 if __name__ == '__main__':
 	main()
