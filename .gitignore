@@ -4,5 +4,8 @@ Log.out
 Log.progress.out
 _tmp/
 
+# Testing directory
+star_testing/
+
 # Python Files
 *.pyc
