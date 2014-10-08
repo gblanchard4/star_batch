@@ -9,7 +9,7 @@ Alexander Dobin1,*, Carrie A. Davis1, Felix Schlesinger1, Jorg Drenkow1, Chris Z
 
 
 Usage:  
-`star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads -r --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]`
+`star_batch.py -i inputDirectory -e fileExtension -g genomeDir -o outputDirectory [-t threads -r --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]`
 
 
 ## Arguments:  
