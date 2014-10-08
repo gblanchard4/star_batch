@@ -2,6 +2,7 @@
 
 __author__ = "Gene Blanchard"
 __email__ = "me@geneblanchard.com"
+__version__ = "1.10 BOOTES"
 
 '''
 
@@ -9,7 +10,7 @@ STAR Batch Script
 
 '''
 
-from optparse import OptionParser
+import argparse
 from multiprocessing import cpu_count
 import os
 import sys
@@ -18,79 +19,98 @@ import time
 import datetime
 import logging
 
+
+# Get a listing of all files in the input directory that match the file extension and return a unique set
+# The set created does not include the _1.extension or _2.extension
+def make_fileset(recurse, file_extension, input_dir):
+	filelist = []
+	if recurse:
+		for dirname, dirnames, filenames in os.walk(input_dir):
+			for filename in filenames:
+				if filename.endswith(file_extension):
+					# WAT?
+					filelist.append(dirname+'/'+'_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
+	else:
+		for filename in os.listdir(input_dir):
+			if filename.endswith(file_extension):
+				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1])))
+	# Create a set to remove duplicates
+	fileset = set(filelist)
+	return fileset
+
+
 def main():
 
 	# Calculate 90% of CPU
 	cpu_default = int(cpu_count() * .90)
 
 	#Create the argument parser
-	parser = OptionParser(usage="Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads -r --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]")
-
+	parser = argparse.ArgumentParser(description='Usage: star_batch.py -i inputDirectory -e fileExtension -g genomeDir [-t threads -r --clip5pNbases clip5pNbases --outFilterMultimapNmax outFilterMultimapNmax]')
+	
 	# input directory 
 	# -i --input
-	parser.add_option("-i", "--input", action="store", type="string", dest="input_dir", help="The input directory to analyze")
-
+	parser.add_argument("-i", "--input", action="store", type="string", dest="input_dir", help="The input directory to analyze", required=True)
 	# file extension
 	# -e --extension
-	parser.add_option("-e", "--ext", action="store", type="string", dest="extension_string", help="The file extension to match. File extensions must start with '.' to be valid!")
-
-	# threads
-	# -t --threads
-	parser.add_option("-t", "--threads", action="store", type="int", dest="processors", default=cpu_default, help="The number of processors to use. Default is 90 percent of available. i.e. This machine's DEFAULT = %s " % cpu_default)
-
-	# clip5pNbases
-	# --clip5pNbases
-	parser.add_option("--clip5pNbases", action="store", type="int", dest="clip5pbase", default=6, help="clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates. DEFAULT = 6")
-
-	# outFilterMultimapNmax
-	# --outFilterMultimapNmax
-	parser.add_option("--outFilterMultimapNmax", action="store", type="int", dest="repeat", default=10, help="outFilterMultimapNmax: int: read alignments will be output only if the read maps fewer than this value, otherwise no alignments will be output. DEFAULT = 10")
-
+	parser.add_argument("-e", "--ext", action="store", type="string", dest="extension_string", help="The file extension to match. File extensions must start with '.' to be valid!, "required=True)
 	# genome index directory
 	# -g --genomeDir
-	parser.add_option("-g", "--genomeDir", action="store", type="string", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored")
-
-	# all option, recurse into all directories
-	# -r --recurse
-	parser.add_option("-r", "--recurse", action="store_true", dest="all", help="recurse through all directories")
-
+	parser.add_argument("-g", "--genomeDir", action="store", type="string", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored", required=True)
 	# output path
 	# -o --output
-	parser.add_option("-o", "--output", action="store", dest="output_path", help="path to output folder")
+	parser.add_argument("-o", "--output", action="store", dest="output_path", help="path to output folder", required=True)
+	# threads
+	# -t --threads
+	parser.add_argument("-t", "--threads", action="store", type="int", dest="processors", default=cpu_default, help="The number of processors to use. Default is 90 percent of available. i.e. This machine's DEFAULT = %s " % cpu_default)
+	# clip5pNbases
+	# --clip5pNbases
+	parser.add_argument("--clip5pNbases", action="store", type="int", dest="clip5pbase", default=6, help="clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates. DEFAULT = 6")
+	# outFilterMultimapNmax
+	# --outFilterMultimapNmax
+	parser.add_argument("--outFilterMultimapNmax", action="store", type="int", dest="repeat", default=10, help="outFilterMultimapNmax: int: read alignments will be output only if the read maps fewer than this value, otherwise no alignments will be output. DEFAULT = 10")
+	# all option, recurse into all directories
+	# -r --recurse
+	parser.add_argument("-r", "--recurse", action="store_true", dest="recurse", help="recurse through all directories")
 
-	# Grab command line args
-	(options, args) = parser.parse_args()
-
-	# Check if required options exist
-	if not options.input_dir:
-		parser.error('ERROR -i missing,  No input directory given.')
-	if not options.extension_string:
-		parser.error('ERROR -e missing,  No file extension given')
-	if not options.index_dir:
-		parser.error('ERROR -g missing,  No index given.')
-	#if not options.output_dir:
-	#	parser.error('ERROR -o missing,  No output given.')
+	# Parse arguments
+	args = parser.parse_args()
 
 	# Set argument values
-	input_dir = options.input_dir # REQUIRED
-	#output_dir = options.output_dir.rstrip('/')
-	file_extension = options.extension_string # REQUIRED
-	index = options.index_dir #REQUIRED
-	processors = options.processors
-	clip5p = options.clip5pbase
-	repeat = options.repeat
-	output_path = options.output_path
+	input_dir = os.path.abspath(args.input_dir) # REQUIRED
+	index = os.path.abspath(args.index_dir) #REQUIRED
+	file_extension = args.extension_string # REQUIRED
+	output_path = os.path.abspath(output_path)
+	processors = args.processors
+	clip5p = args.clip5pbase
+	repeat = args.repeat
+	recurse = args.recurse
 
+	
 	# Executed timestamp, used for batch and log file creation
 	time_stamp = str(datetime.datetime.now().strftime("%m%d%y-%H%M%S"))
 
-	# Get absolute path information for input directory
-	abs_input_dir = os.path.abspath(input_dir)
-	clean_path_index = index.rstrip('/').split('/')[-1]
 
+	fileset = make_fileset(recurse, file_extension, input_dir)
+'''	
 	# Get a listing of all files in the input directory that match the file extension
 	# The list created does not include the _1.extension or _2.extension
 	filelist = []
+	if recurse:
+		for dirname, dirnames, filenames in os.walk(input_dir):
+			for filename in filenames:
+				if filename.endswith(file_extension):
+					# WAT?
+					filelist.append(dirname+'/'+'_'.join(map(str,filename.rsplit('_')[:-1]))) # multiple underscores
+	else:
+		for filename in os.listdir(input_dir):
+			if filename.endswith(file_extension):
+				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1])))
+	# Create a set to remove duplicates
+	fileset = set(filelist)
+	
+	batchfilename = 'batch_%s.sh' % time_stamp
+	logfilename = 'batch_%s.log' % time_stamp
+--------------------------------------------------------------------------------------------------------------------------------------------
 	if not options.all:
 		for filename in os.listdir(abs_input_dir):
 			if filename.endswith(file_extension):
@@ -104,7 +124,7 @@ def main():
 	print filelist
 	# Convert filelist into a set to remove duplicates
 	fileset = set(filelist)
-
+'''
 	batchfilename = 'batch_%s.sh' % time_stamp
 	logfilename = 'batch_%s.log' % time_stamp
 
