@@ -93,15 +93,16 @@ def main():
 	fileset = make_fileset(recurse, file_extension, input_dir)
 
 	# Print the overview to STDOUT
-	print """STAR Batch Command:			
-			Input Directory: {}
-			File Extension: {}
-			Processors: {}
-			clip5pNbases: {}
-			outFilterMultimapNmax: {}
-			genomeDir: {}
-			Batch File: {}""".format(input_dir, file_extension, processors, clip5p, repeat, index, batchfilename)
-	
+	print """
+	STAR Batch Command:			
+		Input Directory: {}
+		File Extension: {}
+		Processors: {}
+		clip5pNbases: {}
+		outFilterMultimapNmax: {}
+		genomeDir: {}
+			""".format(input_dir, file_extension, processors, clip5p, repeat, index)
+
 	# Build command list
 	command_list = []
 	for filename in fileset:
@@ -116,36 +117,41 @@ def main():
 		
 		# Base string
 		command_string = "STAR"
-		# Index
+		# Index/Genome Location
 		command_string += " --genomeDir {}".format(index)
+		# Number of bases to clip
 		command_string += "--clip5pNbases {}".format(clip5p)
+		# outFilterMultimapNmax
 		command_string += " --outFilterMultimapNmax {}".format(repeat)
+		# Buffer Limit 
 		command_string += " --limitIObufferSize 2750000000"
+		# Input files NOTE: Will make future change for non-paired data
 		command_string += " --readFilesIn {} {}".format(read_1, read_2)
-		command_string += " --readFilesCommand gunzip -c"
+		# Gunzip only if gz'ed
+		if extension.endswith('.gz'):
+			command_string += " --readFilesCommand gunzip -c"
+		# outReadsUnmapped
 		command_string += " --outReadsUnmapped Fastx"
+		# Number of processors
 		command_string += " --runThreadN {}".format(processors)
+		# Output string
 		command_string += " --outFileNamePrefix {}".format(output_string)
+		# end of line
+		command_string += ";\n"
 
-
-
-
-
-		#print command_string 
+		# Add command to the command list 
 		command_list.append(command_string)
 
 
-# Queue the files
+	# Queue the files
 	for command in command_list:
 		try:
-			logging.info("Starting command:\n%s" % command)
+			print "Running: {}".format(command_string)
 			proc = subprocess.Popen(command, shell=True)
 			proc.wait()
-			logging.info("Finished command:\n\t%s" % command)
 		except OSError:
-			logging.info("ERROR:\n\tSomething broke :(")
+			logging.info("ERROR:\n\tSomething broke")
 			
-
 if __name__ == '__main__':
 	main()
  
