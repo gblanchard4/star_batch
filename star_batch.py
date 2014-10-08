@@ -33,8 +33,8 @@ def make_fileset(recurse, file_extension, input_dir):
 	else:
 		for filename in os.listdir(input_dir):
 			if filename.endswith(file_extension):
-				# Append path+filename with no extension
-				filelist.append(dirname+os.path.splitext(filename)[0])
+				# Append filename with no extension
+				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1])))
 	# Create a set to remove duplicates
 	fileset = set(filelist)
 	return fileset
@@ -50,25 +50,25 @@ def main():
 	
 	# input directory 
 	# -i --input
-	parser.add_argument("-i", "--input", action="store", type="string", dest="input_dir", help="The input directory to analyze", required=True)
+	parser.add_argument("-i", "--input", dest="input_dir", help="The input directory to analyze", required=True)
 	# file extension
 	# -e --extension
-	parser.add_argument("-e", "--ext", action="store", type="string", dest="extension_string", help="The file extension to match. File extensions must start with '.' to be valid!, "required=True)
+	parser.add_argument("-e", "--ext", dest="extension_string", help="The file extension to match. File extensions must start with '.' to be valid!", required=True)
 	# genome index directory
 	# -g --genomeDir
-	parser.add_argument("-g", "--genomeDir", action="store", type="string", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored", required=True)
+	parser.add_argument("-g", "--genomeDir", dest="index_dir", help="genomeDir string: path to the directory where genome files are stored", required=True)
 	# output path
 	# -o --output
-	parser.add_argument("-o", "--output", action="store", dest="output_path", help="path to output folder", required=True)
+	parser.add_argument("-o", "--output", dest="output_path", help="path to output folder", required=True)
 	# threads
 	# -t --threads
-	parser.add_argument("-t", "--threads", action="store", type="int", dest="processors", default=cpu_default, help="The number of processors to use. Default is 90 percent of available. i.e. This machine's DEFAULT = %s " % cpu_default)
+	parser.add_argument("-t", "--threads", dest="processors", default=cpu_default, help="The number of processors to use. Default is 90 percent of available. i.e. This machine's DEFAULT = %s " % cpu_default)
 	# clip5pNbases
 	# --clip5pNbases
-	parser.add_argument("--clip5pNbases", action="store", type="int", dest="clip5pbase", default=6, help="clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates. DEFAULT = 6")
+	parser.add_argument("--clip5pNbases", dest="clip5pbase", default=6, help="clip5pNbases: int: number(s) of bases to clip from 5p of each mate. If one value is given, it will be assumed the same for both mates. DEFAULT = 6")
 	# outFilterMultimapNmax
 	# --outFilterMultimapNmax
-	parser.add_argument("--outFilterMultimapNmax", action="store", type="int", dest="repeat", default=10, help="outFilterMultimapNmax: int: read alignments will be output only if the read maps fewer than this value, otherwise no alignments will be output. DEFAULT = 10")
+	parser.add_argument("--outFilterMultimapNmax", dest="repeat", default=10, help="outFilterMultimapNmax: int: read alignments will be output only if the read maps fewer than this value, otherwise no alignments will be output. DEFAULT = 10")
 	# all option, recurse into all directories
 	# -r --recurse
 	parser.add_argument("-r", "--recurse", action="store_true", dest="recurse", help="recurse through all directories")
@@ -80,7 +80,7 @@ def main():
 	input_dir = os.path.abspath(args.input_dir) # REQUIRED
 	index = os.path.abspath(args.index_dir) #REQUIRED
 	file_extension = args.extension_string # REQUIRED
-	output_path = os.path.abspath(output_path) # REQUIRED
+	output_path = os.path.abspath(args.output_path) # REQUIRED
 	processors = args.processors
 	clip5p = args.clip5pbase
 	repeat = args.repeat
@@ -105,7 +105,7 @@ def main():
 	# Build command list
 	command_list = []
 	for filename in fileset:
-		# Build filenames
+		# Build filenames for read one and two
 		read_1 = filename+'_1'+file_extension
 		read_2 = filename+'_2'+file_extension
 
@@ -114,6 +114,23 @@ def main():
 			
 		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s ;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
 		
+		# Base string
+		command_string = "STAR"
+		# Index
+		command_string += " --genomeDir {}".format(index)
+		command_string += "--clip5pNbases {}".format(clip5p)
+		command_string += " --outFilterMultimapNmax {}".format(repeat)
+		command_string += " --limitIObufferSize 2750000000"
+		command_string += " --readFilesIn {} {}".format(read_1, read_2)
+		command_string += " --readFilesCommand gunzip -c"
+		command_string += " --outReadsUnmapped Fastx"
+		command_string += " --runThreadN {}".format(processors)
+		command_string += " --outFileNamePrefix {}".format(output_string)
+
+
+
+
+
 		#print command_string 
 		command_list.append(command_string)
 
