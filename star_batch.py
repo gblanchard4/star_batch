@@ -29,14 +29,17 @@ def make_fileset(recurse, file_extension, input_dir):
 			for filename in filenames:
 				if filename.endswith(file_extension):
 					# Append path+filename with no extension
-					filelist.append(dirname+os.path.splitext(filename)[0]) # multiple underscores
+					filelist.append(dirname+(os.path.splitext(filename)[0]).rsplit('_',1)[0]) # multiple underscores
 	else:
 		for filename in os.listdir(input_dir):
+			print filename
 			if filename.endswith(file_extension):
 				# Append filename with no extension
-				filelist.append('_'.join(map(str,filename.rsplit('_')[:-1])))
+				filelist.append(input_dir+(os.path.splitext(filename)[0]).rsplit('_',1)[0])
 	# Create a set to remove duplicates
+	print filelist
 	fileset = set(filelist)
+	print fileset
 	return fileset
 
 
@@ -77,10 +80,10 @@ def main():
 	args = parser.parse_args()
 
 	# Set argument values
-	input_dir = os.path.abspath(args.input_dir) # REQUIRED
+	input_dir = os.path.abspath(args.input_dir)+'/' # REQUIRED
 	index = os.path.abspath(args.index_dir) #REQUIRED
 	file_extension = args.extension_string # REQUIRED
-	output_path = os.path.abspath(args.output_path) # REQUIRED
+	output_path = os.path.abspath(args.output_path)+'/' # REQUIRED
 	processors = args.processors
 	clip5p = args.clip5pbase
 	repeat = args.repeat
@@ -96,12 +99,13 @@ def main():
 	print """
 	STAR Batch Command:			
 		Input Directory: {}
+		Output Directory: {}
 		File Extension: {}
 		Processors: {}
 		clip5pNbases: {}
 		outFilterMultimapNmax: {}
 		genomeDir: {}
-			""".format(input_dir, file_extension, processors, clip5p, repeat, index)
+			""".format(input_dir, output_path, file_extension, processors, clip5p, repeat, index)
 
 	# Build command list
 	command_list = []
@@ -110,7 +114,7 @@ def main():
 		read_1 = filename+'_1'+file_extension
 		read_2 = filename+'_2'+file_extension
 
-		output_string = "%s/%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (output_path, os.path.basename(filename), clip5p, repeat, clean_path_index)
+		output_string = "%s/%s_STAR_paired_Clip%s_Repeat%s_%s.sam" % (output_path, os.path.basename(filename), clip5p, repeat, os.path.basename(index))
 		print output_string
 			
 		command_string = "STAR --genomeDir %s --clip5pNbases %s --outFilterMultimapNmax %s --limitIObufferSize 2750000000 --readFilesIn %s %s --readFilesCommand gunzip -c --outReadsUnmapped Fastx --runThreadN %s --outFileNamePrefix %s ;\n" % (index, clip5p, repeat, read_1, read_2, processors, output_string)
@@ -120,7 +124,7 @@ def main():
 		# Index/Genome Location
 		command_string += " --genomeDir {}".format(index)
 		# Number of bases to clip
-		command_string += "--clip5pNbases {}".format(clip5p)
+		command_string += " --clip5pNbases {}".format(clip5p)
 		# outFilterMultimapNmax
 		command_string += " --outFilterMultimapNmax {}".format(repeat)
 		# Buffer Limit 
@@ -128,7 +132,7 @@ def main():
 		# Input files NOTE: Will make future change for non-paired data
 		command_string += " --readFilesIn {} {}".format(read_1, read_2)
 		# Gunzip only if gz'ed
-		if extension.endswith('.gz'):
+		if file_extension.endswith('.gz'):
 			command_string += " --readFilesCommand gunzip -c"
 		# outReadsUnmapped
 		command_string += " --outReadsUnmapped Fastx"
@@ -141,7 +145,6 @@ def main():
 
 		# Add command to the command list 
 		command_list.append(command_string)
-
 
 	# Queue the files
 	for command in command_list:
