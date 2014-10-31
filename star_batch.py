@@ -134,6 +134,8 @@ def main():
 		# Gunzip only if gz'ed
 		if file_extension.endswith('.gz'):
 			command_string += " --readFilesCommand gunzip -c"
+		elif file_extension.endswith('.bz2'):
+			command_string += "--readFilesCommand bunzup2 -c"
 		# outReadsUnmapped
 		command_string += " --outReadsUnmapped Fastx"
 		# Number of processors
